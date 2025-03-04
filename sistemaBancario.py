@@ -1,36 +1,42 @@
+from datetime import datetime
+
 saldo = 0
 valores_depositos = list()
 valores_saques = list()
-saques_diario = 0
+transacoes_diarias = 0
+LIMITE_TRANSACOES_DIARIAS = 10
 
 def saque(valor_saque):
-    global saldo, valores_saques, saques_diario
+    global saldo, valores_saques, LIMITE_TRANSACOES_DIARIAS, transacoes_diarias
    
-    if saques_diario == 3:
-        return "Limite diario de saques atingido."
+    if transacoes_diarias == LIMITE_TRANSACOES_DIARIAS:
+        return "Limite diario de transaçoes atingido."
     
     if saldo >= valor_saque and valor_saque <= 500:
         saldo -= valor_saque
-        saques_diario += 1
-        valores_saques.append(valor_saque)
+        transacoes_diarias += 1
+        valores_saques.append(("saque", valor_saque, datetime.now()))
         return f"Você sacou R${valor_saque}. Seu saldo atual: R${saldo:.2f}"
     
-    return f"Você não tem saldo suficiente para realizar o saque ou está tentando sacar mais de R$500. Seu saldo atual: R${saldo:.2f}"
+    return f"Você não tem saldo suficiente para realizar o saque ou valor é maior que R$500. Seu saldo atual: R${saldo:.2f}"
 
 def deposito(valor_deposito):
-    global valores_depositos, saldo
+    global valores_depositos, saldo, transacoes_diarias, LIMITE_TRANSACOES_DIARIAS
+
+    if transacoes_diarias == LIMITE_TRANSACOES_DIARIAS:
+        return "Limite diario de transaçoes atingido."
 
     if valor_deposito <= 0:
         return f"O valor depositado deve ser maior que zero. Seu saldo atual: R${saldo:.2f}"
     saldo += valor_deposito
-    valores_depositos.append(valor_deposito)
+    valores_saques.append(("deposito", valor_deposito, datetime.now()))
     return f"Seu saldo atual: R${saldo:.2f}"
 
 def extrato():
     global valores_depositos, valores_saques, saldo
 
-    print(f"Depositos: {valores_depositos}")
-    print(f"Saques: {valores_saques}")
+    for tipo, valor, data_hora in valores_saques:
+        print(f"{tipo.capitalize()}: R${valor:.2f} em {data_hora.strftime('%d/%m/%Y %H:%M:%S')}")
     print(f"Seu saldo atual: R${saldo:.2f}")
 
 while True:
@@ -38,8 +44,7 @@ while True:
     print("2 - Sacar")
     print("3 - Extrato")
     print("4 - Sair")
-    
-try:
+
     opcao = int(input("Digite a opção desejada: "))
 
     match opcao:
@@ -63,6 +68,3 @@ try:
 
         case _:
             print("Opção inválida.")
-            
-except ValueError:
-    print("❌ Entrada inválida! Digite um número válido.")
