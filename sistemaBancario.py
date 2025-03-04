@@ -15,7 +15,7 @@ def saque(valor_saque):
         valores_saques.append(valor_saque)
         return f"Você sacou R${valor_saque}. Seu saldo atual: R${saldo:.2f}"
     
-    return f"Você não tem saldo suficiente para realizar o saque. Seu saldo atual: R${saldo:.2f}"
+    return f"Você não tem saldo suficiente para realizar o saque ou está tentando sacar mais de R$500. Seu saldo atual: R${saldo:.2f}"
 
 def deposito(valor_deposito):
     global valores_depositos, saldo
