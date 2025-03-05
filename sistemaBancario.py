@@ -1,68 +1,105 @@
+import textwrap
 from datetime import datetime
 
-saldo = 0
-valores_transacoes = list()
-transacoes_diarias = 0
-LIMITE_TRANSACOES_DIARIAS = 10
+class ContaBancaria:
+    def __init__(self, titular, limite=500, limite_saques=3):
+        self.titular = titular
+        self.saldo = 0
+        self.limite = limite
+        self.limite_saques = limite_saques
+        self.numero_saques = 0
+        self.extrato = ""
 
-def saque(valor_saque):
-    global valores_transacoes, LIMITE_TRANSACOES_DIARIAS, transacoes_diarias
-   
-    if transacoes_diarias == LIMITE_TRANSACOES_DIARIAS:
-        return "Limite diario de transaçoes atingido."
-    
-    if saldo >= valor_saque and valor_saque <= 500:
-        saldo -= valor_saque
-        transacoes_diarias += 1
-        valores_transacoes.append(("saque", valor_saque, datetime.now()))
-        return f"Você sacou R${valor_saque}."
-    
-    return f"Você não tem saldo suficiente para realizar o saque ou valor é maior que R$500. Seu saldo atual: R${saldo:.2f}"
+    def depositar(self, valor):
+        if valor > 0:
+            self.saldo += valor
+            self.extrato += f"{datetime.now().strftime('%d-%m-%Y %H:%M:%S')} - Depósito: R$ {valor:.2f}\n"
+            print("\n=== Depósito realizado com sucesso! ===")
+        else:
+            print("\n@@@ Operação falhou! O valor informado é inválido. @@@")
 
-def deposito(valor_deposito):
-    global valores_transacoes, transacoes_diarias, LIMITE_TRANSACOES_DIARIAS
+    def sacar(self, valor):
+        if valor > self.saldo:
+            print("\n@@@ Operação falhou! Você não tem saldo suficiente. @@@")
+        elif valor > self.limite:
+            print("\n@@@ Operação falhou! O valor do saque excede o limite. @@@")
+        elif self.numero_saques >= self.limite_saques:
+            print("\n@@@ Operação falhou! Número máximo de saques excedido. @@@")
+        elif valor > 0:
+            self.saldo -= valor
+            self.numero_saques += 1
+            self.extrato += f"{datetime.now().strftime('%d-%m-%Y %H:%M:%S')} - Saque: R$ {valor:.2f}\n"
+            print("\n=== Saque realizado com sucesso! ===")
+        else:
+            print("\n@@@ Operação falhou! O valor informado é inválido. @@@")
 
-    if transacoes_diarias == LIMITE_TRANSACOES_DIARIAS:
-        return "Limite diario de transaçoes atingido."
+    def exibir_extrato(self):
+        print("\n================ EXTRATO ================")
+        print("Não foram realizadas movimentações." if not self.extrato else self.extrato)
+        print(f"\nSaldo:		R$ {self.saldo:.2f}")
+        print("==========================================")
 
-    if valor_deposito <= 0:
-        return f"O valor depositado deve ser maior que zero. Seu saldo atual: R${saldo:.2f}"
-    saldo += valor_deposito
-    valores_transacoes.append(("deposito", valor_deposito, datetime.now()))
 
-def extrato():
-    global valores_depositos, valores_saques, saldo
+def menu():
+    menu = """
+    ================ MENU ================
+    [1] Depositar
+    [2] Sacar
+    [3] Extrato
+    [4] Nova conta
+    [5] Listar contas
+    [6] Sair
+    => """
+    return input(textwrap.dedent(menu))
 
-    for tipo, valor, data_hora in valores_saques:
-        print(f"{tipo.capitalize()}: R${valor:.2f} em {data_hora.strftime('%d/%m/%Y %H:%M:%S')}")
-    print(f"Seu saldo atual: R${saldo:.2f}")
-
-while True:
-    print("1 - Depositar")
-    print("2 - Sacar")
-    print("3 - Extrato")
-    print("4 - Sair")
-
-    opcao = int(input("Digite a opção desejada: "))
-
-    match opcao:
-        case 1:
-            valor_deposito = float(input("Digite o valor que deseja depositar: "))
-            armazenar_deposito = deposito(valor_deposito)
-            print(armazenar_deposito)
-            print("_____________________________")
-        case 2:
-            valor_saque = float(input("Digite o valor que deseja sacar: "))
-            armazenar_saque = saque(valor_saque)
-            print(armazenar_saque)
-            print("_____________________________")
+def main():
+    contas = []
+    while True:
+        opcao = menu()
         
-        case 3:
-            extrato()
-            print("_____________________________")
+        match opcao:
+            case "1":
+                nome = input("Digite o nome do titular: ")
+                conta = next((c for c in contas if c.titular == nome), None)
+                if conta:
+                    valor = float(input("Informe o valor do depósito: "))
+                    conta.depositar(valor)
+                else:
+                    print("Conta não encontrada!")
+            
+            case "2":
+                nome = input("Digite o nome do titular: ")
+                conta = next((c for c in contas if c.titular == nome), None)
+                if conta:
+                    valor = float(input("Informe o valor do saque: "))
+                    conta.sacar(valor)
+                else:
+                    print("Conta não encontrada!")
+            
+            case "3":
+                nome = input("Digite o nome do titular: ")
+                conta = next((c for c in contas if c.titular == nome), None)
+                if conta:
+                    conta.exibir_extrato()
+                else:
+                    print("Conta não encontrada!")
+            
+            case "4":
+                nome = input("Digite o nome do titular para a nova conta: ")
+                contas.append(ContaBancaria(nome))
+                print("Conta criada com sucesso!")
+            
+            case "5":
+                print("\n===== Lista de Contas =====")
+                for conta in contas:
+                    print(f"Titular: {conta.titular}, Saldo: R$ {conta.saldo:.2f}")
+                print("============================")
+            
+            case "6":
+                print("Saindo...")
+                break
+            
+            case _:
+                print("Operação inválida, por favor selecione novamente a operação desejada.")
 
-        case 4:
-            break
-
-        case _:
-            print("Opção inválida.")
+main()
